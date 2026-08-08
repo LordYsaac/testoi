@@ -1,0 +1,13 @@
+/vendor/
+/.env
+/storage/logs/*.log
+/storage/uploads/*
+!/storage/uploads/clientes/.gitkeep
+!/storage/uploads/productos/.gitkeep
+!/storage/uploads/expedientes/.gitkeep
+!/storage/uploads/recetas/.gitkeep
+/node_modules/
+.DS_Store
+Thumbs.db
+*.swp
+/optica-erp.zip
