@@ -44,6 +44,12 @@ $tituloPagina = $tituloPagina ?? 'Panel';
             </a>
             <?php endif; ?>
 
+            <?php if (Auth::puede('citas.ver')): ?>
+            <a class="nav-link <?= Url::esActiva('citas') ? 'active' : '' ?>" href="<?= e(Url::to('citas')) ?>">
+                <i class="bi bi-calendar3"></i> Agenda medica
+            </a>
+            <?php endif; ?>
+
             <?php if (Auth::puede('productos.ver') || Auth::puede('proveedores.ver') || Auth::puede('compras.ver')): ?>
             <div class="nav-section">Inventario y compras</div>
                 <?php if (Auth::puede('productos.ver')): ?>
@@ -70,8 +76,11 @@ $tituloPagina = $tituloPagina ?? 'Panel';
                 <?php endif; ?>
             <?php endif; ?>
 
-            <?php if (Auth::puede('usuarios.ver') || Auth::puede('roles.ver') || Auth::puede('configuracion.ver')): ?>
+            <?php if (Auth::puede('usuarios.ver') || Auth::puede('roles.ver') || Auth::puede('configuracion.ver') || Auth::puede('reportes.ver')): ?>
             <div class="nav-section">Administracion</div>
+                <?php if (Auth::puede('reportes.ver')): ?>
+                <a class="nav-link <?= Url::esActiva('reportes') ? 'active' : '' ?>" href="<?= e(Url::to('reportes')) ?>"><i class="bi bi-bar-chart"></i> Reportes</a>
+                <?php endif; ?>
                 <?php if (Auth::puede('usuarios.ver')): ?>
                 <a class="nav-link <?= Url::esActiva('usuarios') ? 'active' : '' ?>" href="<?= e(Url::to('usuarios')) ?>"><i class="bi bi-person-badge"></i> Usuarios</a>
                 <?php endif; ?>
@@ -108,6 +117,7 @@ $tituloPagina = $tituloPagina ?? 'Panel';
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li><span class="dropdown-item-text small text-muted-soft"><?= e(Auth::rolNombre()) ?></span></li>
                     <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="<?= e(Url::to('seguridad')) ?>"><i class="bi bi-shield-check me-2"></i>Seguridad (2FA)</a></li>
                     <li><a class="dropdown-item" href="<?= e(Url::to('cambiar-password')) ?>"><i class="bi bi-key me-2"></i>Cambiar contraseña</a></li>
                     <li><a class="dropdown-item text-danger" href="<?= e(Url::to('logout')) ?>"><i class="bi bi-box-arrow-right me-2"></i>Cerrar sesion</a></li>
                 </ul>

@@ -6,8 +6,8 @@ use App\Models\Usuario;
 
 /**
  * Autenticacion y autorizacion. Password hashing con password_hash/password_verify
- * (bcrypt), bloqueo temporal tras intentos fallidos repetidos, y permisos
- * efectivos cacheados en sesion (se recalculan en cada login).
+ * (bcrypt), bloqueo temporal tras intentos fallidos repetidos, permisos
+ * efectivos cacheados en sesion, y doble factor (TOTP) opcional por usuario.
  */
 class Auth
 {
@@ -48,9 +48,62 @@ class Auth
             return ['ok' => false, 'mensaje' => 'Usuario o contraseña incorrectos.'];
         }
 
-        // Login exitoso: rehash si el costo por defecto cambio, reset de intentos, nueva sesion
+        // Contraseña correcta. Si tiene 2FA activo, NO completar la sesion todavia:
+        // solo se marca "pendiente de codigo" hasta que Auth::completarDosFactor() lo confirme.
+        if ((bool) $usuario['two_factor_activo']) {
+            session_regenerate_id(true);
+            $_SESSION['2fa_pendiente_id'] = (int) $usuario['id'];
+            return ['ok' => true, 'requiere_2fa' => true];
+        }
+
+        // Rehash si el costo por defecto de PHP cambio desde que se creo el hash
         $nuevoHash = password_needs_rehash($usuario['password_hash'], PASSWORD_DEFAULT) ? password_hash($password, PASSWORD_DEFAULT) : null;
 
+        self::completarSesion($usuario, $usuarioModel, $nuevoHash);
+        return ['ok' => true, 'requiere_2fa' => false, 'debe_cambiar_password' => (bool) $usuario['debe_cambiar_password']];
+    }
+
+    public static function hayDosFactorPendiente(): bool
+    {
+        return !empty($_SESSION['2fa_pendiente_id']);
+    }
+
+    /** Verifica el codigo TOTP del login en dos pasos y, si es correcto, completa la sesion */
+    public static function completarDosFactor(string $codigo): array
+    {
+        if (empty($_SESSION['2fa_pendiente_id'])) {
+            return ['ok' => false, 'mensaje' => 'No hay un inicio de sesion pendiente de verificar.'];
+        }
+
+        $usuarioModel = new Usuario();
+        $usuario = $usuarioModel->find((int) $_SESSION['2fa_pendiente_id']);
+
+        if (!$usuario || !$usuario['two_factor_activo']) {
+            unset($_SESSION['2fa_pendiente_id']);
+            return ['ok' => false, 'mensaje' => 'Sesion invalida. Inicie sesion de nuevo.'];
+        }
+
+        if (!empty($usuario['bloqueado_hasta']) && strtotime($usuario['bloqueado_hasta']) > time()) {
+            return ['ok' => false, 'mensaje' => 'Cuenta bloqueada temporalmente. Intente mas tarde.'];
+        }
+
+        if (!Totp::verificar($usuario['two_factor_secret'], $codigo)) {
+            $intentos = (int) $usuario['intentos_fallidos'] + 1;
+            $bloqueadoHasta = $intentos >= self::MAX_INTENTOS
+                ? date('Y-m-d H:i:s', strtotime('+' . self::BLOQUEO_MINUTOS . ' minutes'))
+                : null;
+            $usuarioModel->update((int) $usuario['id'], ['intentos_fallidos' => $intentos, 'bloqueado_hasta' => $bloqueadoHasta]);
+            self::registrarAuditoria((int) $usuario['id'], 'login_fallido', 'Codigo 2FA incorrecto');
+            return ['ok' => false, 'mensaje' => 'Codigo incorrecto.'];
+        }
+
+        unset($_SESSION['2fa_pendiente_id']);
+        self::completarSesion($usuario, $usuarioModel);
+        return ['ok' => true, 'debe_cambiar_password' => (bool) $usuario['debe_cambiar_password']];
+    }
+
+    private static function completarSesion(array $usuario, Usuario $usuarioModel, ?string $nuevoHash = null): void
+    {
         $datosActualizar = [
             'intentos_fallidos' => 0,
             'bloqueado_hasta'   => null,
@@ -72,8 +125,6 @@ class Auth
 
         Database::setContextoAuditoria((int) $usuario['id'], Request::ip());
         self::registrarAuditoria((int) $usuario['id'], 'login', 'Inicio de sesion exitoso');
-
-        return ['ok' => true, 'debe_cambiar_password' => (bool) $usuario['debe_cambiar_password']];
     }
 
     public static function logout(): void

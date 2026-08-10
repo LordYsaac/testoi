@@ -18,6 +18,9 @@ $tituloPagina = $cliente['nombre_completo'];
             <?php if (Auth::puede('clientes.editar')): ?>
                 <a href="<?= e(Url::to('clientes/editar/' . $cliente['id'])) ?>" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil me-1"></i>Editar</a>
             <?php endif; ?>
+            <?php if (Auth::puede('citas.crear')): ?>
+                <a href="<?= e(Url::to('citas/crear?cliente_id=' . $cliente['id'])) ?>" class="btn btn-outline-secondary btn-sm"><i class="bi bi-calendar-plus me-1"></i>Agendar cita</a>
+            <?php endif; ?>
             <?php if (Auth::puede('expedientes.crear')): ?>
                 <a href="<?= e(Url::to('expedientes/crear/' . $cliente['id'])) ?>" class="btn btn-primary btn-sm"><i class="bi bi-file-earmark-medical me-1"></i>Nueva consulta</a>
             <?php endif; ?>

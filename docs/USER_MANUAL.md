@@ -181,6 +181,41 @@ pendiente, ordenados por días de atraso. Haga clic en *"Gestionar"* para
 ver sus facturas pendientes específicas y registrar un abono contra
 cualquiera de ellas.
 
+## Seguridad de la cuenta: verificación en dos pasos (2FA)
+
+Menú de usuario (arriba a la derecha) → *"Seguridad (2FA)"*.
+
+**Activar:** clic en *"Activar verificación en dos pasos"* → escanee el
+código QR con Google Authenticator, Authy, o cualquier app compatible
+(o ingrese la clave manualmente si no puede escanear) → ingrese el
+código de 6 dígitos que le muestra la app para confirmar.
+
+Una vez activo, cada inicio de sesión pedirá ese código además de su
+contraseña. Si cambia de teléfono, deberá desactivarlo (con su
+contraseña) y activarlo de nuevo con la app nueva.
+
+## Agenda médica
+
+Menú lateral → *Agenda médica*: calendario del mes con la cantidad de
+citas por día. Haga clic en un día para ver el detalle y agendar,
+editar o cambiar el estado de cada cita (pendiente, confirmada,
+finalizada, cancelada) directamente desde la lista.
+
+Al agendar, si el doctor seleccionado ya tiene otra cita a esa hora
+exacta, el sistema se lo advierte (no bloquea, por si es intencional).
+
+También puede agendar una cita directamente desde la ficha de un
+cliente con el botón *"Agendar cita"*.
+
+## Reportes
+
+Menú lateral → *Reportes*: siete reportes listos para consultar y
+exportar a CSV (se abre directo en Excel) — ventas por período,
+productos más vendidos, clientes frecuentes, inventario valorizado,
+pacientes atendidos, recetas emitidas, y cuentas por cobrar/pagar. Los
+reportes con rango de fechas muestran el mes actual por defecto; ajuste
+"Desde"/"Hasta" y presione Filtrar.
+
 ## Usuarios y Roles (solo Administradores)
 
 **Usuarios:** cree una cuenta por cada miembro del personal, asignando su

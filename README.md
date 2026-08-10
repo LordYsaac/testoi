@@ -11,14 +11,12 @@ prepared statements en el 100% de las consultas.
 
 ---
 
-## Estado del proyecto: Fase 3 de un desarrollo por fases
+## Estado del proyecto: Fase 4 de un desarrollo por fases
 
-La especificación original abarca un ERP + EMR comercial completo (18+
-módulos). Eso es, honestamente, un desarrollo de varias semanas de un
-equipo, no de una sola entrega. Este repositorio lleva **tres fases
-completadas**: la base de datos modela el sistema completo, y los
-módulos clínicos, operativos y financieros centrales están funcionales
-— no maquetas.
+La especificación original abarca un ERP + EMR comercial completo. Este
+repositorio lleva **cuatro fases completadas**, cubriendo el ciclo
+operativo diario completo de una óptica más las capas de seguridad y
+control de gestión.
 
 ### ✅ Incluido y probado de punta a punta en esta entrega
 
@@ -26,32 +24,28 @@ módulos clínicos, operativos y financieros centrales están funcionales
 |---|---|
 | Base de datos completa (48 tablas, vistas, triggers, funciones, SPs) | ✅ |
 | Autenticación, Usuarios y Roles con permisos granulares | ✅ |
+| **Doble factor de autenticación (2FA/TOTP)**, compatible con Google Authenticator/Authy | ✅ |
 | Dashboard (KPIs, gráfico de ventas, alertas, notificaciones) | ✅ |
-| Clientes (CRUD, búsqueda, frecuentes/morosos, antecedentes) | ✅ |
-| Historial clínico oftalmológico completo | ✅ |
-| Recetas ópticas imprimibles con QR de validación pública | ✅ |
-| Inventario (productos, kardex, ajustes) · Proveedores · Compras | ✅ |
-| **Facturación** (NCF automático, líneas de producto/servicio, pago mixto) | ✅ |
-| **Caja** (apertura/cierre con cálculo de diferencia, movimientos) | ✅ |
-| **Cuentas por cobrar** (morosos, abonos) | ✅ |
+| Clientes · Historial clínico oftalmológico · Recetas con QR | ✅ |
+| Inventario · Proveedores · Compras | ✅ |
+| Facturación (NCF, pago mixto) · Caja · Cuentas por cobrar | ✅ |
+| **Agenda médica** (calendario mensual, vista de día, estados, deteccion de choques de horario) | ✅ |
+| **Reportes** (ventas, productos más vendidos, clientes frecuentes, inventario valorizado, pacientes atendidos, recetas emitidas, cuentas por cobrar/pagar) con **exportación CSV** | ✅ |
 | API REST v1 (autenticada por API key) | ✅ |
 
-Facturación, Compras e Historial clínico comparten el mismo patrón
-verificado: **toda operación multi-tabla ocurre en una única transacción**
-(factura + detalle + movimiento de inventario + pago + movimiento de caja,
-o se guarda todo, o no se guarda nada). Probado con casos reales: venta
-con producto + servicio + pago mixto (efectivo/tarjeta) genera
-automáticamente el NCF, descuenta inventario, y concilia con la caja
-abierta — anularla repone el inventario exacto.
+El 2FA está implementado con TOTP (RFC 6238) **sin dependencias
+externas** — verificado contra los vectores de prueba oficiales del RFC
+4226. Funciona con cualquier app autenticadora estándar.
 
-### 🚧 Diseñado en la base de datos, pendiente de interfaz (Fase 4)
+### 🚧 Pendiente (Fase 5 — requiere credenciales/API externas o es de menor prioridad operativa)
 
-Agenda médica (calendario visual — la lógica y vista de dashboard ya
-existen) · Reportes exportables (Excel/PDF/CSV) · Notas de crédito/débito
-y devoluciones · Cotizaciones/Apartados como flujo distinto (hoy
-"Cotización" ya es un tipo de factura simplificado, sin NCF ni
-inventario) · Doble factor de autenticación · Integraciones (WhatsApp,
-Google Calendar, facturación electrónica e-CF, pasarelas de pago).
+Notas de crédito/débito y devoluciones con UI dedicada · Conversión de
+cotización a factura real · WhatsApp API, Google Calendar, facturación
+electrónica (e-CF) y pasarelas de pago — estas cuatro requieren
+credenciales reales de terceros que no existen en este entorno de
+desarrollo, así que se dejan preparadas en `configuracion_integraciones`
+en vez de simuladas. Exportación a Excel/PDF de reportes (hoy es CSV
+nativo; Excel/PDF requieren `PhpSpreadsheet`/`Dompdf` vía Composer).
 
 Ver **[docs/ROADMAP.md](docs/ROADMAP.md)** para el detalle.
 

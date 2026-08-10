@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Controllers\AuthController;
 use App\Controllers\CajaController;
+use App\Controllers\CitasController;
 use App\Controllers\ClientesController;
 use App\Controllers\ComprasController;
 use App\Controllers\CuentasPorCobrarController;
@@ -13,6 +14,7 @@ use App\Controllers\FacturasController;
 use App\Controllers\ProductosController;
 use App\Controllers\ProveedoresController;
 use App\Controllers\RecetasController;
+use App\Controllers\ReportesController;
 use App\Controllers\RolesController;
 use App\Controllers\UsuariosController;
 use App\Core\Middleware\AuthMiddleware;
@@ -29,6 +31,16 @@ $router->post('login', [AuthController::class, 'login']);
 $router->get('logout', [AuthController::class, 'logout'], [AuthMiddleware::class]);
 $router->get('cambiar-password', [AuthController::class, 'mostrarCambiarPassword'], [AuthMiddleware::class]);
 $router->post('cambiar-password', [AuthController::class, 'cambiarPassword'], [AuthMiddleware::class]);
+
+// Verificacion 2FA (segundo paso del login: la sesion aun no esta completa, no lleva AuthMiddleware)
+$router->get('verificar-2fa', [AuthController::class, 'mostrarVerificar2FA']);
+$router->post('verificar-2fa', [AuthController::class, 'verificar2FA']);
+
+// Seguridad de la cuenta (activar/desactivar 2FA)
+$router->get('seguridad', [AuthController::class, 'mostrarSeguridad'], [AuthMiddleware::class]);
+$router->post('seguridad/2fa/generar', [AuthController::class, 'generar2FA'], [AuthMiddleware::class]);
+$router->post('seguridad/2fa/activar', [AuthController::class, 'activar2FA'], [AuthMiddleware::class]);
+$router->post('seguridad/2fa/desactivar', [AuthController::class, 'desactivar2FA'], [AuthMiddleware::class]);
 
 // Validacion publica de recetas por QR (sin login: la usa cualquiera que escanee el codigo)
 $router->get('validar-receta/{codigo}', [RecetasController::class, 'validarPublico']);
@@ -151,5 +163,28 @@ $router->post('caja/movimiento', [CajaController::class, 'registrarMovimiento'],
 $router->get('cuentas-por-cobrar', [CuentasPorCobrarController::class, 'index'], [AuthMiddleware::class, [RoleMiddleware::class, 'cuentas_cobrar.ver']]);
 $router->get('cuentas-por-cobrar/cliente/{clienteId}', [CuentasPorCobrarController::class, 'cliente'], [AuthMiddleware::class, [RoleMiddleware::class, 'cuentas_cobrar.ver']]);
 $router->post('cuentas-por-cobrar/abonar/{facturaId}', [CuentasPorCobrarController::class, 'abonar'], [AuthMiddleware::class, [RoleMiddleware::class, 'cuentas_cobrar.abonar']]);
+
+// -----------------------------------------------------------------------
+// Agenda medica (Citas)
+// -----------------------------------------------------------------------
+$router->get('citas', [CitasController::class, 'index'], [AuthMiddleware::class, [RoleMiddleware::class, 'citas.ver']]);
+$router->get('citas/dia/{fecha}', [CitasController::class, 'dia'], [AuthMiddleware::class, [RoleMiddleware::class, 'citas.ver']]);
+$router->get('citas/crear', [CitasController::class, 'crear'], [AuthMiddleware::class, [RoleMiddleware::class, 'citas.crear']]);
+$router->post('citas/guardar', [CitasController::class, 'guardar'], [AuthMiddleware::class, [RoleMiddleware::class, 'citas.crear']]);
+$router->get('citas/editar/{id}', [CitasController::class, 'editar'], [AuthMiddleware::class, [RoleMiddleware::class, 'citas.editar']]);
+$router->post('citas/actualizar/{id}', [CitasController::class, 'actualizar'], [AuthMiddleware::class, [RoleMiddleware::class, 'citas.editar']]);
+$router->post('citas/estado/{id}', [CitasController::class, 'cambiarEstado'], [AuthMiddleware::class, [RoleMiddleware::class, 'citas.editar']]);
+
+// -----------------------------------------------------------------------
+// Reportes
+// -----------------------------------------------------------------------
+$router->get('reportes', [ReportesController::class, 'index'], [AuthMiddleware::class, [RoleMiddleware::class, 'reportes.ver']]);
+$router->get('reportes/ventas', [ReportesController::class, 'ventas'], [AuthMiddleware::class, [RoleMiddleware::class, 'reportes.ver']]);
+$router->get('reportes/productos-mas-vendidos', [ReportesController::class, 'productosMasVendidos'], [AuthMiddleware::class, [RoleMiddleware::class, 'reportes.ver']]);
+$router->get('reportes/clientes-frecuentes', [ReportesController::class, 'clientesFrecuentes'], [AuthMiddleware::class, [RoleMiddleware::class, 'reportes.ver']]);
+$router->get('reportes/inventario', [ReportesController::class, 'inventario'], [AuthMiddleware::class, [RoleMiddleware::class, 'reportes.ver']]);
+$router->get('reportes/pacientes-atendidos', [ReportesController::class, 'pacientesAtendidos'], [AuthMiddleware::class, [RoleMiddleware::class, 'reportes.ver']]);
+$router->get('reportes/recetas-emitidas', [ReportesController::class, 'recetasEmitidas'], [AuthMiddleware::class, [RoleMiddleware::class, 'reportes.ver']]);
+$router->get('reportes/cuentas', [ReportesController::class, 'cuentas'], [AuthMiddleware::class, [RoleMiddleware::class, 'reportes.ver']]);
 
 return $router;
