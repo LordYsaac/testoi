@@ -154,6 +154,10 @@ vinculado a ningún arqueo.
 5. Agregue el/los método(s) de pago. Puede dividir el pago entre efectivo
    y tarjeta, por ejemplo — el sistema calcula el saldo pendiente
    automáticamente si el total pagado es menor al total de la factura.
+   **Para efectivo, ingrese lo que el cliente entrega en mano** (no lo
+   que hay que cobrar): si el total es RD$259.60 y el cliente paga con
+   RD$500, escriba 500 — el sistema calcula el vuelto (RD$240.40) y lo
+   muestra en pantalla y en el recibo impreso automáticamente.
 
 Al guardar, en una sola operación: se registra la factura, se descuenta
 el inventario de cada producto vendido, se registra el pago, y si tiene

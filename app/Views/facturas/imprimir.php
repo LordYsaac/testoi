@@ -70,6 +70,9 @@
             <tr><td>Descuento</td><td class="num" style="text-align:right;"><?= moneda($factura['descuento']) ?></td></tr>
             <tr><td>ITBIS</td><td class="num" style="text-align:right;"><?= moneda($factura['itbis']) ?></td></tr>
             <tr class="total-final"><td>Total</td><td class="num" style="text-align:right;"><?= moneda($factura['total']) ?></td></tr>
+            <?php if ((float) ($factura['vuelto'] ?? 0) > 0): ?>
+            <tr><td>Vuelto</td><td class="num" style="text-align:right;font-weight:bold;"><?= moneda($factura['vuelto']) ?></td></tr>
+            <?php endif; ?>
             <?php if ((float) $factura['saldo_pendiente'] > 0): ?>
             <tr><td>Saldo pendiente</td><td class="num" style="text-align:right;color:#c94a3f;"><?= moneda($factura['saldo_pendiente']) ?></td></tr>
             <?php endif; ?>

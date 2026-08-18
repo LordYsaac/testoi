@@ -132,6 +132,17 @@ que el mismo código funciona igual si el hosting sirve el sistema desde
 `https://dominio.com/` o desde `https://dominio.com/sistema/` — muy común
 en hosting compartido donde no siempre se puede fijar el document root.
 
+### 7. El vuelto en efectivo nunca infla la caja
+Cuando un pago en efectivo supera lo que falta por cubrir, el excedente
+es "vuelto" (cambio) — dinero que sale físicamente de la caja de vuelta
+al cliente. `Factura::crearCompleta()` capea cada pago a lo que
+realmente aplica a la factura; solo ese monto capeado llega a
+`factura_pagos` y a `caja_movimientos`. El vuelto se calcula y se guarda
+aparte (`facturas.vuelto`), y se muestra en pantalla y en el recibo,
+pero **nunca se registra como ingreso de caja**. Sin esto, cerrar caja
+mostraría una diferencia falsa exactamente del tamaño del vuelto
+entregado durante el turno.
+
 ## Seguridad por capas
 
 1. **Red/servidor:** `.htaccess` deniega acceso directo a `app/`, `config/`, `database/`, `storage/`.

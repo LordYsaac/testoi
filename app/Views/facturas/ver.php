@@ -34,8 +34,17 @@
     <div class="col-6 col-md-3"><div class="card card-kpi"><div class="kpi-label">Subtotal</div><div class="kpi-value" style="font-size:1.2rem"><?= moneda($factura['subtotal']) ?></div></div></div>
     <div class="col-6 col-md-3"><div class="card card-kpi"><div class="kpi-label">ITBIS</div><div class="kpi-value" style="font-size:1.2rem"><?= moneda($factura['itbis']) ?></div></div></div>
     <div class="col-6 col-md-3"><div class="card card-kpi"><div class="kpi-label">Total</div><div class="kpi-value" style="font-size:1.2rem"><?= moneda($factura['total']) ?></div></div></div>
-    <div class="col-6 col-md-3"><div class="card card-kpi"><div class="kpi-label">Saldo pendiente</div><div class="kpi-value <?= (float) $factura['saldo_pendiente'] > 0 ? 'text-danger' : '' ?>" style="font-size:1.2rem"><?= moneda($factura['saldo_pendiente']) ?></div></div></div>
+    <div class="col-6 col-md-3">
+        <?php if ((float) ($factura['vuelto'] ?? 0) > 0): ?>
+            <div class="card card-kpi"><div class="kpi-label">Vuelto entregado</div><div class="kpi-value text-primary-brand" style="font-size:1.2rem"><?= moneda($factura['vuelto']) ?></div></div>
+        <?php else: ?>
+            <div class="card card-kpi"><div class="kpi-label">Saldo pendiente</div><div class="kpi-value <?= (float) $factura['saldo_pendiente'] > 0 ? 'text-danger' : '' ?>" style="font-size:1.2rem"><?= moneda($factura['saldo_pendiente']) ?></div></div>
+        <?php endif; ?>
+    </div>
 </div>
+<?php if ((float) ($factura['vuelto'] ?? 0) > 0 && (float) $factura['saldo_pendiente'] > 0): ?>
+<div class="alert alert-warning small py-2 mb-3">Esta factura tiene vuelto entregado (<?= moneda($factura['vuelto']) ?>) y ademas saldo pendiente (<?= moneda($factura['saldo_pendiente']) ?>) — revise los pagos registrados.</div>
+<?php endif; ?>
 
 <div class="card mb-3">
     <div class="p-3 pb-0"><div class="form-section-title">Detalle</div></div>

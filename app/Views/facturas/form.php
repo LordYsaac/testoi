@@ -82,10 +82,15 @@
             <button type="button" id="btn-agregar-pago" class="btn btn-sm btn-outline-primary"><i class="bi bi-plus-lg me-1"></i>Agregar método</button>
         </div>
         <div id="cuerpo-pagos"></div>
-        <div class="d-flex justify-content-between small mt-2">
-            <span>Pagado: <strong class="font-mono" id="f-pagado">RD$ 0.00</strong></span>
-            <span>Saldo pendiente: <strong class="font-mono" id="f-saldo">RD$ 0.00</strong></span>
+        <div class="small mt-2">
+            <div class="d-flex justify-content-between"><span>Pagado</span><strong class="font-mono" id="f-pagado">RD$ 0.00</strong></div>
+            <div class="d-flex justify-content-between"><span>Saldo pendiente</span><strong class="font-mono" id="f-saldo">RD$ 0.00</strong></div>
+            <div class="d-flex justify-content-between" id="fila-vuelto" style="display:none !important;">
+                <span class="text-primary-brand fw-semibold">Vuelto a entregar</span>
+                <strong class="font-mono text-primary-brand" id="f-vuelto">RD$ 0.00</strong>
+            </div>
         </div>
+        <p class="text-muted-soft small mt-2 mb-0">Para pagos en <strong>efectivo</strong>, ingrese el monto que el cliente entrega en mano (no lo que hay que cobrar) — el sistema calcula el vuelto automaticamente y ese vuelto no se cuenta como ingreso de caja.</p>
     </div>
 
     <div class="mb-4">
@@ -122,11 +127,13 @@
 <template id="plantilla-pago">
     <div class="row g-2 mb-2 fila-pago">
         <div class="col-5">
-            <select name="metodo_pago[]" class="form-select form-select-sm">
+            <select name="metodo_pago[]" class="form-select form-select-sm campo-metodo-pago">
                 <option value="efectivo">Efectivo</option><option value="tarjeta">Tarjeta</option><option value="transferencia">Transferencia</option><option value="cheque">Cheque</option>
             </select>
         </div>
-        <div class="col-5"><input type="number" step="0.01" name="monto_pago[]" class="form-control form-control-sm campo-monto-pago" value="0"></div>
+        <div class="col-5">
+            <input type="number" step="0.01" name="monto_pago[]" class="form-control form-control-sm campo-monto-pago" value="0" placeholder="Monto recibido">
+        </div>
         <div class="col-2"><button type="button" class="btn btn-sm btn-outline-danger w-100 btn-quitar-pago"><i class="bi bi-x-lg"></i></button></div>
     </div>
 </template>
@@ -162,10 +169,34 @@
         document.getElementById('f-itbis').textContent = fm(itbis);
         document.getElementById('f-total').textContent = fm(total);
 
+        // Misma logica que el servidor (Factura::crearCompleta): cada pago se capea a
+        // lo que falta por cubrir, y el excedente en efectivo se muestra como vuelto.
+        var saldoPorCubrir = total;
         var pagado = 0;
-        cuerpoPagos.querySelectorAll('.campo-monto-pago').forEach(function (i) { pagado += parseFloat(i.value) || 0; });
+        var vuelto = 0;
+        cuerpoPagos.querySelectorAll('.fila-pago').forEach(function (fila) {
+            var metodo = fila.querySelector('select[name="metodo_pago[]"]').value;
+            var monto = parseFloat(fila.querySelector('.campo-monto-pago').value) || 0;
+            if (monto <= 0) return;
+            var aplicado = Math.min(monto, Math.max(0, saldoPorCubrir));
+            var excedente = monto - aplicado;
+            if (excedente > 0 && metodo === 'efectivo') {
+                vuelto += excedente;
+            }
+            pagado += aplicado;
+            saldoPorCubrir -= aplicado;
+        });
+
         document.getElementById('f-pagado').textContent = fm(pagado);
-        document.getElementById('f-saldo').textContent = fm(Math.max(0, total - pagado));
+        document.getElementById('f-saldo').textContent = fm(Math.max(0, saldoPorCubrir));
+
+        var filaVuelto = document.getElementById('fila-vuelto');
+        if (vuelto > 0.004) {
+            filaVuelto.style.setProperty('display', 'flex', 'important');
+            document.getElementById('f-vuelto').textContent = fm(vuelto);
+        } else {
+            filaVuelto.style.setProperty('display', 'none', 'important');
+        }
     }
 
     function agregarLinea() {
@@ -196,6 +227,7 @@
         if (e.target.closest('.btn-quitar-linea-factura')) { e.target.closest('tr').remove(); recalcular(); }
     });
     cuerpoPagos.addEventListener('input', recalcular);
+    cuerpoPagos.addEventListener('change', recalcular);
     cuerpoPagos.addEventListener('click', function (e) {
         if (e.target.closest('.btn-quitar-pago')) { e.target.closest('.fila-pago').remove(); recalcular(); }
     });

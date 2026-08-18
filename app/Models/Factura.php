@@ -37,11 +37,40 @@ class Factura extends Model
             $itbis = round($baseImponible * ($itbisPorcentaje / 100), 2);
             $total = round($baseImponible + $itbis, 2);
 
-            $montoPagado = 0.0;
+            // Los pagos se procesan en el orden en que se ingresaron, limitando cada uno
+            // a lo que realmente falta por cubrir. Lo que exceda en un pago EN EFECTIVO
+            // se registra como "vuelto" (cambio) y NO se cuenta como ingreso de caja ni
+            // como pago aplicado -- evita que el efectivo esperado al cerrar caja quede
+            // inflado por el cambio que se le devolvio al cliente.
+            $saldoPorCubrir = $total;
+            $vuelto = 0.0;
+            $pagosAplicados = [];
+
             foreach ($pagos as $pago) {
-                $montoPagado += (float) $pago['monto'];
+                $montoIngresado = (float) $pago['monto'];
+                if ($montoIngresado <= 0) {
+                    continue;
+                }
+
+                $aplicado = round(min($montoIngresado, max(0, $saldoPorCubrir)), 2);
+                $excedente = round($montoIngresado - $aplicado, 2);
+
+                if ($excedente > 0 && $pago['metodo_pago'] === 'efectivo') {
+                    $vuelto += $excedente;
+                }
+                // Si el excedente viene de un metodo distinto a efectivo (tarjeta,
+                // transferencia, cheque), simplemente no se aplica: no existe "vuelto"
+                // fisico en esos medios: lo mas probable es que sea un error de captura.
+
+                if ($aplicado > 0) {
+                    $pagosAplicados[] = ['metodo_pago' => $pago['metodo_pago'], 'monto' => $aplicado, 'referencia' => $pago['referencia'] ?? null];
+                }
+
+                $saldoPorCubrir = round($saldoPorCubrir - $aplicado, 2);
             }
-            $saldoPendiente = $esVentaCompleta ? max(0, round($total - $montoPagado, 2)) : 0;
+
+            $saldoPendiente = $esVentaCompleta ? max(0, $saldoPorCubrir) : 0;
+            $vuelto = $esVentaCompleta ? round($vuelto, 2) : 0;
             $estado = !$esVentaCompleta ? 'pendiente' : ($saldoPendiente <= 0 ? 'pagada' : 'pendiente');
 
             $ncf = null;
@@ -63,6 +92,7 @@ class Factura extends Model
                 'total'           => $total,
                 'condicion_pago'  => $encabezado['condicion_pago'] ?? 'contado',
                 'saldo_pendiente' => $saldoPendiente,
+                'vuelto'          => $vuelto,
                 'estado'          => $estado,
                 'observaciones'   => $encabezado['observaciones'] ?? null,
             ]);
@@ -99,10 +129,7 @@ class Factura extends Model
 
             $cajaAbierta = (new CajaSesion())->sesionAbiertaDe($usuarioId);
 
-            foreach ($pagos as $pago) {
-                if ((float) $pago['monto'] <= 0) {
-                    continue;
-                }
+            foreach ($pagosAplicados as $pago) {
                 $stmt = $this->db->prepare(
                     'INSERT INTO factura_pagos (factura_id, metodo_pago, monto, referencia, fecha, usuario_id)
                      VALUES (:factura_id, :metodo, :monto, :referencia, NOW(), :usuario_id)'

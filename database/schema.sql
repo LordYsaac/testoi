@@ -709,6 +709,7 @@ CREATE TABLE facturas (
     total             DECIMAL(12,2) NOT NULL DEFAULT 0,
     condicion_pago    ENUM('contado','credito') NOT NULL DEFAULT 'contado',
     saldo_pendiente   DECIMAL(12,2) NOT NULL DEFAULT 0,
+    vuelto            DECIMAL(12,2) NOT NULL DEFAULT 0 COMMENT 'Cambio entregado al cliente cuando el efectivo recibido supera el total',
     estado            ENUM('pendiente','pagada','anulada','vencida') NOT NULL DEFAULT 'pendiente',
     factura_referencia_id INT UNSIGNED NULL COMMENT 'Para notas de credito/debito o facturacion desde cotizacion/apartado',
     observaciones     VARCHAR(500) NULL,
